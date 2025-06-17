@@ -1,0 +1,23 @@
+# ベースイメージとしてPython 3.11のスリム版を使用
+FROM python:3.11-slim-buster
+
+# コンテナ内の作業ディレクトリを /app に設定
+WORKDIR /app
+
+# requirements.txt を /app にコピーし、Pythonの依存関係をインストール
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Swiss Ephemerisのデータファイルをコピー
+# ローカルPCの 'ephe' フォルダの内容を、コンテナ内の '/app/ephe' にコピーします
+COPY ephe /app/ephe
+
+# 環境変数 SWISSEPH_PATH を設定。これは main.py でデータファイルの場所を指定するために使われます
+ENV SWISSEPH_PATH="/app/ephe"
+
+# アプリケーションコード (main.py) を /app にコピー
+COPY main.py .
+
+# コンテナが起動したときに実行するコマンド
+# Gunicornを使ってFlaskアプリケーション (main.py の 'app' オブジェクト) をポート8080で起動します
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "main:app"]
